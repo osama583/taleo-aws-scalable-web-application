@@ -74,6 +74,10 @@ flowchart TD
 
 The editable diagrams.net source is included at [`AWS_Architecture_Compact.drawio`](AWS_Architecture_Compact.drawio).
 
+## Database ERD
+
+The database entity-relationship diagram is available at [`Taleo_Prelaunch_ERD.drawio.xml`](Taleo_Prelaunch_ERD.drawio.xml). It documents the seven PostgreSQL tables, their primary and unique constraints, and the foreign-key relationships used by the registration and admin flows.
+
 ## Request flow
 
 1. Route 53 resolves the Taleo domain to the CloudFront distribution.
