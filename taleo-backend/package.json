@@ -1,0 +1,25 @@
+{
+  "name": "taleo-backend",
+  "version": "1.0.0",
+  "description": "Express API for the Taleo registration campaign and admin dashboard",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "admin:reset-password": "node scripts/reset-admin-password.js",
+    "db:allow-vip": "node scripts/apply-vip-role.js",
+    "test": "node --check index.js && node --check db.js && node --check scripts/reset-admin-password.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.5.2",
+    "jsonwebtoken": "^9.0.3",
+    "pg": "^8.22.0"
+  }
+}

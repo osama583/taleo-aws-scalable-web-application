@@ -1,0 +1,23 @@
+# Dependencies and generated output
+node_modules/
+dist/
+coverage/
+
+# Environment files and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Database backups and local data
+*dump*.sql
+*.backup
+*.dump
+
+# Logs and editor files
+*.log
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
