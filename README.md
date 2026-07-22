@@ -1,245 +1,125 @@
 # Taleo: Scalable Web Application on AWS
 
-Taleo is a multilingual pre-launch platform for personalized children's storybooks. It helps families register their interest in a story created around a child, their personality, and a value or habit the family wants to encourage.
+Taleo is a pre-launch website that registers people interested in a personalized children's story box before the business launches. This repository presents the AWS cloud architecture proposed for hosting that website securely and at scale.
 
-This repository contains the Taleo React frontend, Express API, PostgreSQL schema, and the proposed AWS architecture for deploying the application as a highly available, scalable web platform.
+## Cloud design objective
 
-## Table of contents
-
-- [Solution overview](#solution-overview)
-- [Architecture](#architecture)
-- [Request flow](#request-flow)
-- [AWS services](#aws-services)
-- [Availability and scaling](#availability-and-scaling)
-- [Security](#security)
-- [Application features](#application-features)
-- [Repository structure](#repository-structure)
-- [Run locally](#run-locally)
-- [AWS deployment outline](#aws-deployment-outline)
-- [Monitoring](#monitoring)
-- [Validation](#validation)
-- [Deployment status](#deployment-status)
-
-## Solution overview
-
-The architecture follows a traditional EC2-based, three-tier design:
-
-- A presentation tier delivered globally through Amazon CloudFront
-- An application tier running the Node.js API on EC2 Auto Scaling instances
-- A data tier using Amazon RDS for PostgreSQL with Multi-AZ availability
-
-The workload is distributed across two Availability Zones. Public-facing infrastructure is placed in public subnets, while application instances and the database remain in private subnets.
+The design uses an EC2-based three-tier architecture that separates public delivery, private application processing, and private database storage. It is designed for high availability across two Availability Zones, automatic scaling, secure administration, and operational monitoring.
 
 ## Architecture
 
-```mermaid
-flowchart TD
-    USER[End user] --> R53[Amazon Route 53]
-    R53 --> CF[Amazon CloudFront]
-    WAF[AWS WAF] -. Associated Web ACL .-> CF
+![Taleo AWS cloud architecture](docs/aws-architecture.png)
 
-    CF -->|Static frontend| S3[Private Amazon S3 bucket]
-    CF -->|Dynamic and API requests| ALB[Application Load Balancer]
+The editable diagrams.net source is available in [`AWS_Architecture_Compact.drawio`](AWS_Architecture_Compact.drawio).
 
-    subgraph VPC[Amazon VPC - 10.0.0.0/16]
-        subgraph AZA[Availability Zone A]
-            NATA[NAT Gateway A]
-            EC2A[EC2 application instance]
-            DBPRIMARY[(RDS primary)]
-        end
+## Architecture overview
 
-        subgraph AZB[Availability Zone B]
-            NATB[NAT Gateway B]
-            EC2B[EC2 application instance]
-            DBSTANDBY[(RDS Multi-AZ standby)]
-        end
-
-        ALB --> EC2A
-        ALB --> EC2B
-        EC2A -->|PostgreSQL through RDS endpoint| DBPRIMARY
-        EC2B -->|PostgreSQL through RDS endpoint| DBPRIMARY
-        DBPRIMARY -. Synchronous replication .-> DBSTANDBY
-        EC2A --> NATA
-        EC2B --> NATB
-    end
-
-    SSM[AWS Systems Manager] -. Session Manager .-> EC2A
-    SSM -. Session Manager .-> EC2B
-    ALB --> CW[Amazon CloudWatch]
-    EC2A --> CW
-    EC2B --> CW
-    CW --> SNS[Amazon SNS]
-    SNS --> OPS[Operations notification]
-```
-
-The editable diagrams.net source is included at [`AWS_Architecture_Compact.drawio`](AWS_Architecture_Compact.drawio).
-
-## Database ERD
-
-The database entity-relationship diagram is available at [`Taleo_Prelaunch_ERD.drawio.xml`](Taleo_Prelaunch_ERD.drawio.xml). It documents the seven PostgreSQL tables, their primary and unique constraints, and the foreign-key relationships used by the registration and admin flows.
+- **Edge layer:** Route 53 directs the domain to CloudFront. AWS WAF filters malicious or excessive requests.
+- **Presentation layer:** CloudFront delivers static website assets from a private S3 bucket through Origin Access Control.
+- **Application layer:** Dynamic and API traffic reaches an Application Load Balancer, which distributes requests to EC2 instances in private subnets.
+- **Data layer:** The application connects to Amazon RDS for PostgreSQL in isolated database subnets, with a Multi-AZ standby for failover.
+- **Operations layer:** Systems Manager provides administrative access without public SSH. CloudWatch and SNS provide monitoring and notifications.
 
 ## Request flow
 
-1. Route 53 resolves the Taleo domain to the CloudFront distribution.
-2. AWS WAF inspects requests at the CloudFront edge.
-3. CloudFront serves the compiled React application from a private S3 origin using Origin Access Control.
-4. Dynamic and API requests are forwarded to the public Application Load Balancer.
-5. The ALB routes healthy requests to EC2 instances in private application subnets across two Availability Zones.
-6. Every application instance connects to the same RDS PostgreSQL endpoint. AWS manages primary and standby failover.
-7. CloudWatch collects metrics and alarms, and SNS sends operational notifications.
+1. Route 53 resolves the Taleo domain to CloudFront.
+2. AWS WAF inspects incoming requests.
+3. CloudFront serves cached static content from the private S3 origin.
+4. Dynamic and API requests are sent to the public Application Load Balancer.
+5. The ALB routes healthy requests to EC2 application instances across two Availability Zones.
+6. EC2 instances access PostgreSQL through the RDS endpoint.
+7. CloudWatch records metrics and triggers SNS notifications when an alarm threshold is reached.
 
 ## AWS services
 
-| Service | Purpose |
+| AWS service | Role in the architecture |
 |---|---|
-| Amazon Route 53 | DNS and alias routing to CloudFront |
-| Amazon CloudFront | Global delivery and caching for the website |
-| AWS WAF | Managed and rate-based protection for public requests |
-| Amazon S3 | Private storage for the compiled React frontend |
-| Amazon VPC | Network isolation across public, application, and database subnets |
-| Internet Gateway | Internet connectivity for public resources |
-| NAT Gateway | Controlled outbound access for private EC2 instances |
-| Application Load Balancer | Health checks and traffic distribution across EC2 targets |
-| Amazon EC2 Auto Scaling | Runs and scales the Express backend across two Availability Zones |
+| Amazon Route 53 | Domain Name System and alias routing to CloudFront |
+| Amazon CloudFront | Global content delivery and origin routing |
+| AWS WAF | Managed and rate-based protection at the public edge |
+| Amazon S3 | Private origin for static website assets |
+| Amazon VPC | Network isolation for all regional resources |
+| Internet Gateway | Internet connectivity for public subnets |
+| NAT Gateway | Controlled outbound internet access for private EC2 instances |
+| Application Load Balancer | HTTPS termination, health checks, and request distribution |
+| Amazon EC2 Auto Scaling | Runs and automatically scales the application tier |
 | Amazon RDS for PostgreSQL | Managed relational database with Multi-AZ failover |
-| AWS Systems Manager | Secure Session Manager access without a bastion host |
-| Amazon CloudWatch | Logs, metrics, dashboards, and alarms |
-| Amazon SNS | Alarm notifications for operators |
+| AWS Systems Manager | Session Manager access without a bastion host |
+| Amazon CloudWatch | Central metrics, logs, dashboards, and alarms |
+| Amazon SNS | Operational alarm notifications |
 
-## Availability and scaling
+## Network design
 
-- The ALB spans public subnets in two Availability Zones.
-- The Auto Scaling Group spans two private application subnets.
-- The proposed group configuration is a minimum of 2, desired capacity of 2, and maximum of 4 EC2 instances.
-- Target-tracking scaling can maintain an average CPU utilization target of 60%.
-- ALB health checks use the backend `GET /health` endpoint.
-- RDS Multi-AZ provides a synchronous standby and managed database failover.
-- CloudFront caches static content close to users and reduces origin traffic.
+The workload is placed in a `10.0.0.0/16` VPC in `us-east-1` and distributed across two Availability Zones. Each zone contains:
 
-## Security
+- A public subnet for the ALB and NAT Gateway
+- A private application subnet for EC2 instances
+- A private database subnet for RDS
 
-- The S3 frontend bucket remains private and is accessed only through CloudFront Origin Access Control.
-- AWS WAF protects the public entry point with managed OWASP-oriented and rate-based rules.
-- EC2 and RDS are placed in private subnets and receive no public IP addresses.
-- Security-group flow follows `ALB-SG -> App-SG -> DB-SG` with only required ports allowed.
-- Systems Manager Session Manager replaces public SSH and bastion-host access.
-- Production secrets belong in a managed secret store or protected instance configuration, never in Git.
-- The repository ignores environment files, private keys, generated builds, and database backups.
-- The published SQL seed contains no registrations, phone numbers, user emails, or password hashes.
-- Passwords are hashed with bcrypt and successful authentication returns a time-limited JWT.
+The Internet Gateway serves public routes. Each private application subnet uses the NAT Gateway in its own Availability Zone for outbound traffic. Database subnets have no direct internet route.
 
-## Application features
+Traffic is restricted through the security-group chain `ALB-SG -> App-SG -> DB-SG`, allowing only the required listener, application, and PostgreSQL ports.
 
-- Responsive Taleo pre-launch landing page
-- English, Arabic, and Bahasa Melayu content
-- Right-to-left layout support for Arabic
-- Interest registration with international phone-number validation
-- Printed and digital book-format preferences
-- Live supporter counter
-- Admin login and protected registrations dashboard
-- Express rate limiting for registration, count, dropdown, and login endpoints
-- PostgreSQL-backed languages, dropdown options, registrations, and users
+## High availability and scaling
 
-## Repository structure
+- The ALB and Auto Scaling Group span two Availability Zones.
+- The proposed Auto Scaling capacity is minimum `2`, desired `2`, and maximum `4` EC2 instances.
+- Target-tracking scaling maintains approximately `60%` average CPU utilization.
+- ALB health checks remove unhealthy application instances from service.
+- RDS Multi-AZ maintains a synchronous standby and provides managed failover.
+- CloudFront caches static content close to users and reduces load on the regional origins.
+- One NAT Gateway per Availability Zone avoids a single-zone outbound dependency.
 
-```text
-.
-|-- AWS_Architecture_Compact.drawio    # Editable AWS architecture diagram
-|-- database/
-|   `-- taleo_schema_and_seed.sql      # Schema and safe lookup seed data
-|-- taleo-backend/
-|   |-- scripts/                       # Admin and role-management utilities
-|   |-- db.js                          # PostgreSQL connection pool
-|   `-- index.js                       # Express API
-`-- taleo-frontend/
-    |-- public/
-    `-- src/                           # React application and admin interface
-```
+## Security design
 
-## Run locally
+- The S3 bucket is private and accessible to CloudFront through Origin Access Control.
+- AWS WAF protects the public entry point with managed and rate-based rules.
+- EC2 and RDS have no public IP addresses.
+- Security groups permit traffic only between the required tiers.
+- Systems Manager Session Manager replaces direct SSH access and removes the need for a bastion host.
+- HTTPS should be enforced at CloudFront and the ALB using certificates from AWS Certificate Manager.
+- Application secrets should be stored in AWS Secrets Manager or Systems Manager Parameter Store, not in source control.
+- Encryption should be enabled for S3, EBS, RDS, CloudWatch Logs, and data in transit.
 
-### Prerequisites
+## Monitoring and operations
 
-- Node.js 20 or later
-- PostgreSQL
-- `psql`
-
-### 1. Create the database
-
-Create an empty PostgreSQL database and restore the safe schema and lookup records:
-
-```powershell
-createdb taleo
-psql -d taleo -f database/taleo_schema_and_seed.sql
-```
-
-The seed contains languages and translated dropdown options only. It intentionally creates no registrations or users.
-
-### 2. Configure and run the backend
-
-```powershell
-cd taleo-backend
-Copy-Item .env.example .env
-npm install
-npm run admin:reset-password
-npm start
-```
-
-Before running the admin command, configure the PostgreSQL connection and generate a strong `JWT_SECRET` in `.env`. The command securely creates the first admin account or updates an existing admin password.
-
-The API starts at `http://localhost:4000`. Check `http://localhost:4000/health` for application and database connectivity.
-
-### 3. Configure and run the frontend
-
-```powershell
-cd taleo-frontend
-Copy-Item .env.example .env
-npm install
-npm run dev
-```
-
-The Vite development server normally starts at `http://localhost:5173`. Set `VITE_API_URL` to the backend URL.
-
-## AWS deployment outline
-
-1. Create the VPC, two Availability Zones, and public, application, and database subnets.
-2. Attach an Internet Gateway and configure one NAT Gateway per Availability Zone.
-3. Create the RDS PostgreSQL Multi-AZ database in the private DB subnet group.
-4. Install and configure the Express backend on an EC2 launch template.
-5. Create an Auto Scaling Group across the private application subnets.
-6. Create a public ALB, target group, health check, and HTTPS listener.
-7. Build the React frontend with the production API URL and upload `dist/` to the private S3 bucket.
-8. Create the CloudFront distribution with S3 and ALB origins and associate AWS WAF.
-9. Create the Route 53 alias record for the CloudFront distribution.
-10. Configure CloudWatch alarms, SNS notifications, and Systems Manager access.
-
-## Monitoring
-
-Recommended CloudWatch alarms include:
+CloudWatch should collect application logs and infrastructure metrics. Recommended alarms include:
 
 - ALB unhealthy host count greater than zero
-- ALB target response time above the accepted threshold
-- EC2 Auto Scaling average CPU above the scaling target
-- RDS CPU, free storage, and database connection thresholds
-- HTTP 5xx error rates from CloudFront and the ALB
+- Elevated ALB target response time or HTTP 5xx rate
+- EC2 CPU utilization above the scaling target
+- RDS CPU, storage, connection, and failover events
+- CloudFront error-rate thresholds
 
-## Validation
+Alarm actions publish to an SNS topic so the operations contact receives a notification.
 
-Backend syntax checks:
+## Database design
 
-```powershell
-cd taleo-backend
-npm test
-```
+The database tier uses Amazon RDS for PostgreSQL in private database subnets. The project includes a sanitized schema and lookup seed data suitable for initializing the environment; it contains no customer registrations or credentials.
 
-Frontend lint and production build:
+The entity-relationship diagram is available in [`Taleo_Prelaunch_ERD.drawio.xml`](Taleo_Prelaunch_ERD.drawio.xml).
 
-```powershell
-cd taleo-frontend
-npm run lint
-npm run build
-```
+## Cloud deployment sequence
+
+1. Create the VPC, route tables, and public, application, and database subnets across two Availability Zones.
+2. Attach the Internet Gateway and deploy one NAT Gateway in each public subnet.
+3. Create security groups for the ALB, application, and database tiers.
+4. Deploy the RDS PostgreSQL Multi-AZ database in the private database subnet group.
+5. Create the EC2 launch template and Auto Scaling Group in the private application subnets.
+6. Create the public ALB, target group, health checks, and HTTPS listener.
+7. Upload the static website build to the private S3 bucket.
+8. Create CloudFront with S3 and ALB origins, then associate AWS WAF.
+9. Point the Route 53 domain record to CloudFront.
+10. Configure Systems Manager, CloudWatch alarms, log retention, and SNS notifications.
+
+## Project deliverables
+
+- AWS architecture diagram in editable Drawio format
+- AWS architecture image for documentation
+- Database entity-relationship diagram
+- Sanitized PostgreSQL schema and lookup seed data
+- Website source code used by the proposed cloud deployment
 
 ## Deployment status
 
-The application code, safe database seed, and AWS architecture are ready for publication. The live AWS URL will be added after the cloud resources are deployed.
+The architecture and supporting project artifacts are prepared for the cloud design assignment. A live URL can be added after the AWS resources are provisioned.
