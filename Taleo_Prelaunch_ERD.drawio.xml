@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" agent="Codex" version="26.0.9">
+  <diagram id="taleo-prelaunch-erd" name="Taleo Prelaunch ERD">
+    <mxGraphModel dx="1600" dy="1100" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <mxCell id="title" value="&lt;b style=&quot;font-size:24px&quot;&gt;Taleo Prelaunch Database ERD&lt;/b&gt;&lt;br&gt;&lt;span style=&quot;font-size:12px;color:#5f6b7a&quot;&gt;PostgreSQL schema used by the registration campaign and admin workspace&lt;/span&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontColor=#232F3E;" vertex="1" parent="1">
+          <mxGeometry x="400" y="30" width="800" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="dropdown_categories" value="&lt;div style=&quot;background:#147EBA;color:white;padding:10px;font-size:16px&quot;&gt;&lt;b&gt;dropdown_categories&lt;/b&gt;&lt;/div&gt;&lt;div style=&quot;padding:10px;line-height:1.65&quot;&gt;&lt;b&gt;PK&lt;/b&gt; id : smallint [sequence]&lt;br&gt;&lt;b&gt;UQ&lt;/b&gt; code : varchar(50)&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=0;strokeColor=#147EBA;strokeWidth=2;fillColor=#F5FAFF;fontSize=13;fontFamily=Courier New;" vertex="1" parent="1">
+          <mxGeometry x="60" y="150" width="360" height="150" as="geometry" />
+        </mxCell>
+
+        <mxCell id="dropdown_options" value="&lt;div style=&quot;background:#147EBA;color:white;padding:10px;font-size:16px&quot;&gt;&lt;b&gt;dropdown_options&lt;/b&gt;&lt;/div&gt;&lt;div style=&quot;padding:10px;line-height:1.65&quot;&gt;&lt;b&gt;PK&lt;/b&gt; id : uuid [gen_random_uuid()]&lt;br&gt;&lt;b&gt;FK&lt;/b&gt; category_id : smallint&lt;br&gt;code : varchar(50)&lt;br&gt;&lt;b&gt;UQ&lt;/b&gt; (category_id, code)&lt;br&gt;&lt;b&gt;UQ&lt;/b&gt; (id, category_id)&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=0;strokeColor=#147EBA;strokeWidth=2;fillColor=#F5FAFF;fontSize=13;fontFamily=Courier New;" vertex="1" parent="1">
+          <mxGeometry x="580" y="130" width="440" height="230" as="geometry" />
+        </mxCell>
+
+        <mxCell id="languages" value="&lt;div style=&quot;background:#147EBA;color:white;padding:10px;font-size:16px&quot;&gt;&lt;b&gt;languages&lt;/b&gt;&lt;/div&gt;&lt;div style=&quot;padding:10px;line-height:1.65&quot;&gt;&lt;b&gt;PK&lt;/b&gt; id : smallint [sequence]&lt;br&gt;&lt;b&gt;UQ&lt;/b&gt; code : varchar(5)&lt;br&gt;name : varchar(50)&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=0;strokeColor=#147EBA;strokeWidth=2;fillColor=#F5FAFF;fontSize=13;fontFamily=Courier New;" vertex="1" parent="1">
+          <mxGeometry x="1180" y="150" width="360" height="175" as="geometry" />
+        </mxCell>
+
+        <mxCell id="dropdown_option_translations" value="&lt;div style=&quot;background:#147EBA;color:white;padding:10px;font-size:16px&quot;&gt;&lt;b&gt;dropdown_option_translations&lt;/b&gt;&lt;/div&gt;&lt;div style=&quot;padding:10px;line-height:1.65&quot;&gt;&lt;b&gt;PK, FK&lt;/b&gt; option_id : uuid&lt;br&gt;&lt;b&gt;PK, FK&lt;/b&gt; language_id : smallint&lt;br&gt;label : varchar(150)&lt;br&gt;&lt;b&gt;PK&lt;/b&gt; (option_id, language_id)&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=0;strokeColor=#147EBA;strokeWidth=2;fillColor=#F5FAFF;fontSize=13;fontFamily=Courier New;" vertex="1" parent="1">
+          <mxGeometry x="1110" y="480" width="450" height="210" as="geometry" />
+        </mxCell>
+
+        <mxCell id="users" value="&lt;div style=&quot;background:#C45500;color:white;padding:10px;font-size:16px&quot;&gt;&lt;b&gt;users&lt;/b&gt;&lt;/div&gt;&lt;div style=&quot;padding:10px;line-height:1.65&quot;&gt;&lt;b&gt;PK&lt;/b&gt; id : uuid [gen_random_uuid()]&lt;br&gt;&lt;b&gt;UQ&lt;/b&gt; email : varchar(255)&lt;br&gt;password_hash : varchar(255)&lt;br&gt;role : varchar(20) [default ADMIN]&lt;br&gt;created_at : timestamptz [now()]&lt;br&gt;&lt;b&gt;CHECK&lt;/b&gt; role IN (ADMIN, VIP)&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=0;strokeColor=#C45500;strokeWidth=2;fillColor=#FFF8F2;fontSize=13;fontFamily=Courier New;" vertex="1" parent="1">
+          <mxGeometry x="60" y="390" width="440" height="250" as="geometry" />
+        </mxCell>
+
+        <mxCell id="interest_registrations" value="&lt;div style=&quot;background:#248814;color:white;padding:10px;font-size:16px&quot;&gt;&lt;b&gt;interest_registrations&lt;/b&gt;&lt;/div&gt;&lt;div style=&quot;padding:10px;line-height:1.65&quot;&gt;&lt;b&gt;PK&lt;/b&gt; id : uuid [gen_random_uuid()]&lt;br&gt;name : varchar(150)&lt;br&gt;&lt;b&gt;UQ&lt;/b&gt; phone_number : varchar(32)&lt;br&gt;created_at : timestamptz [now()]&lt;br&gt;&lt;b&gt;CHECK&lt;/b&gt; phone_number is E.164 format&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=0;strokeColor=#248814;strokeWidth=2;fillColor=#F6FBF3;fontSize=13;fontFamily=Courier New;" vertex="1" parent="1">
+          <mxGeometry x="60" y="760" width="440" height="220" as="geometry" />
+        </mxCell>
+
+        <mxCell id="registration_dropdown_answers" value="&lt;div style=&quot;background:#248814;color:white;padding:10px;font-size:16px&quot;&gt;&lt;b&gt;registration_dropdown_answers&lt;/b&gt;&lt;/div&gt;&lt;div style=&quot;padding:10px;line-height:1.65&quot;&gt;&lt;b&gt;PK, FK&lt;/b&gt; registration_id : uuid&lt;br&gt;&lt;b&gt;PK, FK&lt;/b&gt; category_id : smallint&lt;br&gt;&lt;b&gt;FK&lt;/b&gt; option_id : uuid&lt;br&gt;&lt;b&gt;PK&lt;/b&gt; (registration_id, category_id)&lt;br&gt;&lt;b&gt;FK&lt;/b&gt; (option_id, category_id)&lt;br&gt;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;references dropdown_options(id, category_id)&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=0;strokeColor=#248814;strokeWidth=2;fillColor=#F6FBF3;fontSize=13;fontFamily=Courier New;" vertex="1" parent="1">
+          <mxGeometry x="600" y="700" width="500" height="260" as="geometry" />
+        </mxCell>
+
+        <mxCell id="legend" value="&lt;b&gt;Legend&lt;/b&gt;&amp;nbsp;&amp;nbsp; PK = Primary Key&amp;nbsp;&amp;nbsp; FK = Foreign Key&amp;nbsp;&amp;nbsp; UQ = Unique Constraint&amp;nbsp;&amp;nbsp; All columns are NOT NULL&amp;nbsp;&amp;nbsp; Parent 1 | Child 0..many" style="rounded=1;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;strokeColor=#AAB7B8;fillColor=#F7F8F8;fontColor=#46535F;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="500" y="1020" width="650" height="45" as="geometry" />
+        </mxCell>
+
+        <mxCell id="rel_category_options" value="category (RESTRICT)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=ERone;startFill=0;endArrow=ERzeroToMany;endFill=0;strokeWidth=2;strokeColor=#147EBA;fontSize=12;" edge="1" parent="1" source="dropdown_categories" target="dropdown_options">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="rel_option_translations" value="translated labels (CASCADE)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=ERone;startFill=0;endArrow=ERzeroToMany;endFill=0;strokeWidth=2;strokeColor=#147EBA;fontSize=12;" edge="1" parent="1" source="dropdown_options" target="dropdown_option_translations">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="rel_language_translations" value="language (RESTRICT)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=ERone;startFill=0;endArrow=ERzeroToMany;endFill=0;strokeWidth=2;strokeColor=#147EBA;fontSize=12;" edge="1" parent="1" source="languages" target="dropdown_option_translations">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="rel_registration_answers" value="submitted answers (CASCADE)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=ERone;startFill=0;endArrow=ERzeroToMany;endFill=0;strokeWidth=2;strokeColor=#248814;fontSize=12;" edge="1" parent="1" source="interest_registrations" target="registration_dropdown_answers">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="rel_category_answers" value="question category (RESTRICT)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=ERone;startFill=0;endArrow=ERzeroToMany;endFill=0;strokeWidth=2;strokeColor=#6C8EBF;fontSize=12;" edge="1" parent="1" source="dropdown_categories" target="registration_dropdown_answers">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="520" y="340" />
+              <mxPoint x="520" y="820" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="rel_option_answers" value="selected option + category (RESTRICT)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=ERone;startFill=0;endArrow=ERzeroToMany;endFill=0;strokeWidth=2;strokeColor=#6C8EBF;fontSize=12;" edge="1" parent="1" source="dropdown_options" target="registration_dropdown_answers">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
